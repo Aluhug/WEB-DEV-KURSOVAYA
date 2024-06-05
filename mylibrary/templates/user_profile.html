@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 offset-lg-3">
+        <h2>Личный кабинет</h2>
+        <img src="{{ url_for('static', filename='profile_pics/' + current_user.image_file) }}" class="img-thumbnail" alt="Profile Picture">
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.picture.label(class="form-label") }}
+                {{ form.picture(class="form-control-file") }}
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Сохранить изменения</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

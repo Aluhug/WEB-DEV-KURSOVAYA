@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <h2>Бронирование книги</h2>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.duration.label(class="form-label") }}
+                {{ form.duration(class="form-control") }}
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Забронировать</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
