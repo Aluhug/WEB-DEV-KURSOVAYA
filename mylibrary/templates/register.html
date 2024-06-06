@@ -12,12 +12,31 @@
             <input type="email" class="form-control" id="email">
         </div>
         <div class="mb-3">
+            <label for="first_name" class="form-label">Имя</label>
+            <input type="text" class="form-control" id="first_name">
+        </div>
+        <div class="mb-3">
+            <label for="last_name" class="form-label">Фамилия</label>
+            <input type="text" class="form-control" id="last_name">
+        </div>
+        <div class="mb-3">
+            <label for="middle_name" class="form-label">Отчество (необязательно)</label>
+            <input type="text" class="form-control" id="middle_name">
+        </div>
+        <div class="mb-3">
             <label for="password" class="form-label">Пароль</label>
             <input type="password" class="form-control" id="password">
         </div>
         <div class="mb-3">
             <label for="confirm_password" class="form-label">Подтвердите пароль</label>
             <input type="password" class="form-control" id="confirm_password">
+        </div>
+        <div class="mb-3">
+            <label for="role" class="form-label">Роль</label>
+            <select class="form-select" id="role">
+                <option value="user">Пользователь</option>
+                <option value="librarian">Библиотекарь</option>
+            </select>
         </div>
         <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
     </form>

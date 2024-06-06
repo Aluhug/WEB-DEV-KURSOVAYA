@@ -20,6 +20,6 @@ class DBConnector:
         return g.db
 
     def disconnect(self, e=None):
-        if 'db' in g:
-            g.db.close()
-        g.pop('db', None)
+        db = g.pop('db', None)
+        if db is not None:
+            db.close()

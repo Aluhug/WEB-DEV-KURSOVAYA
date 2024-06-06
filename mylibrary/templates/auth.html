@@ -1,16 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}Авторизация{% endblock %}
 {% block content %}
-    <h1>Страница авторизации</h1>
-    <form>
+    <h1 class="mb-3 text-center">Авторизация</h1>
+    <form class="w-50 mx-auto">
         <div class="mb-3">
-            <label for="exampleInputEmail1" class="form-label">Email адрес</label>
-            <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+            <label for="username" class="form-label">Логин</label>
+            <input type="text" class="form-control" id="username" placeholder="Логин">
         </div>
         <div class="mb-3">
-            <label for="exampleInputPassword1" class="form-label">Пароль</label>
-            <input type="password" class="form-control" id="exampleInputPassword1">
+            <label for="password" class="form-label">Пароль</label>
+            <input type="password" class="form-control" id="password" placeholder="Пароль">
         </div>
-        <button type="submit" class="btn btn-primary">Войти</button>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="remember_me">
+            <label class="form-check-label" for="remember_me">Запомнить меня</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mb-3">Вход</button>
+        <a href="/register" class="btn btn-success w-100">Нет аккаунта? Зарегистрируйся</a>
     </form>
 {% endblock %}
