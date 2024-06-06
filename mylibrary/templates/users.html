@@ -1,5 +1,29 @@
 {% extends 'base.html' %}
 {% block title %}Пользователи{% endblock %}
 {% block content %}
-    <h1>Список пользователей</h1>
+    <h1 class="mb-3 text-center">Список пользователей</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Login</th>
+                <th>Email</th>
+                <th>Пароль</th>
+                <th>Роль</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.login }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.password_hash }}</td>
+                <td>{{ user.role_id }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

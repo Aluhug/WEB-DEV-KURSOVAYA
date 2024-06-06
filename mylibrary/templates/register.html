@@ -1,43 +1,35 @@
 {% extends 'base.html' %}
 {% block title %}Регистрация{% endblock %}
 {% block content %}
-    <h1>Страница регистрации</h1>
-    <form>
+    <h1 class="mb-3 text-center">Регистрация</h1>
+    <form class="w-50 mx-auto" method="POST">
         <div class="mb-3">
-            <label for="username" class="form-label">Логин</label>
-            <input type="text" class="form-control" id="username">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ username }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="login" class="form-label">Логин</label>
+            <input type="text" class="form-control" id="login" name="login" value="{{ login }}" required>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email адрес</label>
-            <input type="email" class="form-control" id="email">
-        </div>
-        <div class="mb-3">
-            <label for="first_name" class="form-label">Имя</label>
-            <input type="text" class="form-control" id="first_name">
-        </div>
-        <div class="mb-3">
-            <label for="last_name" class="form-label">Фамилия</label>
-            <input type="text" class="form-control" id="last_name">
-        </div>
-        <div class="mb-3">
-            <label for="middle_name" class="form-label">Отчество (необязательно)</label>
-            <input type="text" class="form-control" id="middle_name">
+            <input type="email" class="form-control" id="email" name="email" value="{{ email }}" required>
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Пароль</label>
-            <input type="password" class="form-control" id="password">
+            <input type="password" class="form-control" id="password" name="password" required>
         </div>
         <div class="mb-3">
             <label for="confirm_password" class="form-label">Подтвердите пароль</label>
-            <input type="password" class="form-control" id="confirm_password">
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
         </div>
         <div class="mb-3">
             <label for="role" class="form-label">Роль</label>
-            <select class="form-select" id="role">
-                <option value="user">Пользователь</option>
-                <option value="librarian">Библиотекарь</option>
+            <select class="form-select" id="role" name="role">
+                <option value="1" {% if role_id == '1' %}selected{% endif %}>Пользователь</option>
+                <option value="2" {% if role_id == '2' %}selected{% endif %}>Библиотекарь</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        <button type="submit" class="btn btn-primary w-100 mb-3">Зарегистрироваться</button>
     </form>
 {% endblock %}

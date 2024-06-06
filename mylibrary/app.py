@@ -29,9 +29,8 @@ def db_operation(func):
                 connection.commit()
         except Exception as e:
             connection.rollback()
+            print(f"Error in {func.__name__}: {e}")  # Добавление отладочной информации
             raise e
-        finally:
-            connection.close()
         return result
     return wrapper
 
@@ -71,8 +70,8 @@ def auth(cursor):
             flash('Авторизация прошла успешно', 'success')
             login_user(User(user.id, user.login), remember=remember_me)
             next_url = request.args.get('next', url_for('index'))
-            return redirect(next_url)
-        flash('Invalid username or password', 'danger')
+            return redirect(url_for('book'))        
+            flash('Invalid username or password', 'danger')
     return render_template('auth.html')
 
 @app.route('/register', methods=['POST', 'GET'])
@@ -83,15 +82,24 @@ def register(cursor):
         login = request.form['login']
         email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         role_id = request.form['role']
 
-        cursor.execute(
-            "INSERT INTO users (username, login, password_hash, email, role_id) "
-            "VALUES (%s, %s, SHA2(%s, 256), %s, %s)",
-            (username, login, password, email, role_id)
-        )
-        flash('Регистрация прошла успешно!', 'success')
-        return redirect(url_for('auth'))
+        if password != confirm_password:
+            flash('Пароли не совпадают', 'danger')
+            return render_template('register.html', username=username, login=login, email=email, role_id=role_id)
+
+        try:
+            cursor.execute(
+                "INSERT INTO users (username, login, password_hash, email, role_id) "
+                "VALUES (%s, %s, SHA2(%s, 256), %s, %s)",
+                (username, login, password, email, role_id)
+            )
+            flash('Регистрация прошла успешно!', 'success')
+            return redirect(url_for('book'))
+        except Exception as e:
+            flash(f'Ошибка при регистрации: {e}', 'danger')
+            print(f"Error during registration: {e}")  
     return render_template('register.html')
 
 @app.route('/profile')
@@ -107,8 +115,11 @@ def add_book():
     return render_template('add_book.html')
 
 @app.route('/admin/users')
-def users():
-    return render_template('users.html')
+@db_operation
+def users(cursor):
+    cursor.execute("SELECT id, username, login, email, password_hash, role_id FROM users")
+    users = cursor.fetchall()
+    return render_template('users.html', users=users)
 
 @app.route('/admin/edit_user')
 def edit_user():

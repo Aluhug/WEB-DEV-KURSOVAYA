@@ -2,17 +2,17 @@
 {% block title %}Авторизация{% endblock %}
 {% block content %}
     <h1 class="mb-3 text-center">Авторизация</h1>
-    <form class="w-50 mx-auto">
+    <form class="w-50 mx-auto" method="POST">
         <div class="mb-3">
             <label for="username" class="form-label">Логин</label>
-            <input type="text" class="form-control" id="username" placeholder="Логин">
+            <input type="text" class="form-control" id="username" name="username" placeholder="Логин">
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Пароль</label>
-            <input type="password" class="form-control" id="password" placeholder="Пароль">
+            <input type="password" class="form-control" id="password" name="password" placeholder="Пароль">
         </div>
         <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="remember_me">
+            <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
             <label class="form-check-label" for="remember_me">Запомнить меня</label>
         </div>
         <button type="submit" class="btn btn-primary w-100 mb-3">Вход</button>
