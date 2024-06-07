@@ -1,0 +1,101 @@
+-- Таблица Роли
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Таблица Пользователи
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(256) NOT NULL,
+    login VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(256) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    role_id INT NOT NULL,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+-- Таблица Жанры
+CREATE TABLE genres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Таблица Авторы
+CREATE TABLE authors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    middle_name VARCHAR(255)
+);
+
+-- Таблица Книги
+CREATE TABLE books (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    author_id INT NOT NULL,
+    genre_id INT NOT NULL,
+    description TEXT NOT NULL,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 10),
+    availability BOOLEAN NOT NULL DEFAULT TRUE,
+    cover_image VARCHAR(255);
+    FOREIGN KEY (author_id) REFERENCES authors(id),
+    FOREIGN KEY (genre_id) REFERENCES genres(id)
+);
+
+-- Таблица Бронирования
+CREATE TABLE reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    book_id INT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (book_id) REFERENCES books(id)
+);
+
+-- Таблица Отзывы
+CREATE TABLE reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    book_id INT NOT NULL,
+    review_text TEXT NOT NULL,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 10),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (book_id) REFERENCES books(id)
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
+--Таблица roles
+-- Добавление роли пользователя
+INSERT INTO roles (id, name) VALUES (1, 'Пользователь');
+
+-- Добавление роли библиотекаря
+INSERT INTO roles (id, name) VALUES (2, 'Библиотекарь');
+
+-- Добавление жанров
+INSERT INTO genres (name) VALUES ('Фантастика');
+INSERT INTO genres (name) VALUES ('Роман');
+INSERT INTO genres (name) VALUES ('Детектив');
+
+-- Добавление авторов
+INSERT INTO authors (first_name, last_name, middle_name) VALUES ('Айзек', 'Азимов', NULL);
+INSERT INTO authors (first_name, last_name, middle_name) VALUES ('Джейн', 'Остин', NULL);
+INSERT INTO authors (first_name, last_name, middle_name) VALUES ('Агата', 'Кристи', NULL);
+
+-- Добавление книг
+INSERT INTO books (title, author_id, genre_id, description, rating) VALUES ('Я, Робот', 1, 1, 'Сборник научно-фантастических рассказов.', 9);
+INSERT INTO books (title, author_id, genre_id, description, rating) VALUES ('Гордость и предубеждение', 2, 2, 'Роман, описывающий жизнь английского общества.', 8);
+INSERT INTO books (title, author_id, genre_id, description, rating) VALUES ('Убийство в "Восточном экспрессе"', 3, 3, 'Детективный роман о расследовании убийства в поезде.', 10);
+
+-- Добавление бронирований
+INSERT INTO reservations (user_id, book_id, start_date, end_date, status) VALUES (1, 1, '2024-06-01', '2024-06-10', TRUE);
+
+-- Добавление отзывов
+INSERT INTO reviews (user_id, book_id, review_text, rating) VALUES (1, 1, 'Очень интересная книга!', 9);
+INSERT INTO reviews (user_id, book_id, review_text, rating) VALUES (2, 2, 'Прекрасный роман!', 8);
+INSERT INTO reviews (user_id, book_id, review_text, rating) VALUES (3, 3, 'Захватывающий детектив.', 10);
+

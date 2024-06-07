@@ -2,14 +2,26 @@
 {% block title %}Добавить книгу{% endblock %}
 {% block content %}
     <h1>Добавить новую книгу</h1>
-    <form>
+    <form method="POST" action="/admin/add_book" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="title" class="form-label">Название книги</label>
-            <input type="text" class="form-control" id="title">
+            <input type="text" class="form-control" id="title" name="title" required>
         </div>
         <div class="mb-3">
             <label for="author" class="form-label">Автор</label>
-            <input type="text" class="form-control" id="author">
+            <input type="text" class="form-control" id="author" name="author" required>
+        </div>
+        <div class="mb-3">
+            <label for="genre" class="form-label">Жанр</label>
+            <input type="text" class="form-control" id="genre" name="genre" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="cover_image" class="form-label">Изображение обложки</label>
+            <input type="file" class="form-control" id="cover_image" name="cover_image" required>
         </div>
         <button type="submit" class="btn btn-primary">Добавить книгу</button>
     </form>

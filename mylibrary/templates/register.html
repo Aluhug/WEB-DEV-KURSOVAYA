@@ -5,15 +5,15 @@
     <form class="w-50 mx-auto" method="POST">
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" id="username" name="username" value="{{ username }}" required>
+            <input type="text" class="form-control" id="username" name="username" value="{{ request.form.username }}" required>
         </div>
         <div class="mb-3">
             <label for="login" class="form-label">Логин</label>
-            <input type="text" class="form-control" id="login" name="login" value="{{ login }}" required>
+            <input type="text" class="form-control" id="login" name="login" value="{{ request.form.login }}" required>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email адрес</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ email }}" required>
+            <input type="email" class="form-control" id="email" name="email" value="{{ request.form.email }}" required>
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Пароль</label>
@@ -26,8 +26,8 @@
         <div class="mb-3">
             <label for="role" class="form-label">Роль</label>
             <select class="form-select" id="role" name="role">
-                <option value="1" {% if role_id == '1' %}selected{% endif %}>Пользователь</option>
-                <option value="2" {% if role_id == '2' %}selected{% endif %}>Библиотекарь</option>
+                <option value="1" {% if request.form.role == '1' %}selected{% endif %}>Пользователь</option>
+                <option value="2" {% if request.form.role == '2' %}selected{% endif %}>Библиотекарь</option>
             </select>
         </div>
         <button type="submit" class="btn btn-primary w-100 mb-3">Зарегистрироваться</button>

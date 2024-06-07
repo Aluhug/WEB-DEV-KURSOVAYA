@@ -1,16 +1,27 @@
 {% extends 'base.html' %}
 {% block title %}Редактировать пользователя{% endblock %}
 {% block content %}
-    <h1>Редактировать пользователя</h1>
-    <form>
+    <h1 class="mb-3 text-center">Редактировать пользователя</h1>
+    <form class="w-50 mx-auto" method="POST">
         <div class="mb-3">
-            <label for="username" class="form-label">Логин</label>
-            <input type="text" class="form-control" id="username">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="login" class="form-label">Логин</label>
+            <input type="text" class="form-control" id="login" name="login" value="{{ user.login }}" required>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email адрес</label>
-            <input type="email" class="form-control" id="email">
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
         </div>
-        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <div class="mb-3">
+            <label for="role" class="form-label">Роль</label>
+            <select class="form-select" id="role" name="role">
+                <option value="1" {% if user.role_id == 1 %}selected{% endif %}>Пользователь</option>
+                <option value="2" {% if user.role_id == 2 %}selected{% endif %}>Библиотекарь</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
     </form>
 {% endblock %}
