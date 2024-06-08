@@ -3,13 +3,39 @@
 {% block content %}
     <div class="container">
         <h1 class="my-4">Список книг</h1>
+        <form method="GET" action="{{ url_for('books') }}" class="mb-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Поиск по названию книги" value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="author" class="form-control">
+                        <option value="">Выберите автора</option>
+                        {% for author in authors %}
+                            <option value="{{ author.id }}" {% if request.args.get('author') == str(author.id) %}selected{% endif %}>{{ author.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="genre" class="form-control">
+                        <option value="">Выберите жанр</option>
+                        {% for genre in genres %}
+                            <option value="{{ genre.id }}" {% if request.args.get('genre') == str(genre.id) %}selected{% endif %}>{{ genre.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Фильтр</button>
+                </div>
+            </div>
+        </form>
         <div class="row">
             {% for book in books %}
                 <div class="col-12 mb-4">
                     <div class="card h-100">
                         <div class="row no-gutters">
                             <div class="col-md-4">
-                                <img class="card-img" src="{{ book.cover_image }}" alt="Book cover">
+                                <img class="card-img" src="{{ url_for('static', filename=book.cover_image) }}" alt="Book cover">
                             </div>
                             <div class="col-md-8">
                                 <div class="card-body">

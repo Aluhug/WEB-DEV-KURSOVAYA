@@ -5,7 +5,7 @@
         <h1 class="my-4 text-center">{{ book.title }}</h1>
         <div class="row">
             <div class="col-md-4">
-                <img class="img-fluid" src="{{ book.cover_image }}" alt="Book cover">
+                <img class="img-fluid" src="{{ url_for('static', filename=book.cover_image) }}" alt="Book cover">
             </div>
             <div class="col-md-8 text-center">
                 <h3>Автор: {{ book.author }}</h3>
@@ -14,14 +14,14 @@
                 <p>Рейтинг: {{ book.average_rating|round(1)|default('Нет отзывов', true) }}</p>
                 <form method="post">
                     {% if is_reading %}
-                        <button type="submit" class="btn btn-warning" name="unmark_reading">Отметить чтение книги</button>
+                        <button type="submit" class="btn btn-warning mt-2" name="unmark_reading">Отметить чтение книги</button>
                     {% else %}
-                        <button type="submit" class="btn btn-primary" name="mark_reading">Отметить книгу как читаемую</button>
+                        <button type="submit" class="btn btn-primary mt-2" name="mark_reading">Отметить книгу как читаемую</button>
                     {% endif %}
                     {% if is_reserved %}
-                        <button type="submit" class="btn btn-danger" name="unreserve_book">Отменить бронирование книги</button>
+                        <button type="submit" class="btn btn-danger mt-2" name="unreserve_book">Отменить бронирование книги</button>
                     {% else %}
-                        <button type="submit" class="btn btn-primary" name="reserve_book">Забронировать книгу</button>
+                        <button type="submit" class="btn btn-primary mt-2" name="reserve_book">Забронировать книгу</button>
                     {% endif %}
                     <button type="button" class="btn btn-secondary mt-2">Читать книгу полностью</button>
                     <button type="button" class="btn btn-secondary mt-2">Скачать книгу</button>

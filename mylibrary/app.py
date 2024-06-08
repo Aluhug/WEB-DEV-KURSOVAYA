@@ -2,12 +2,13 @@ import os
 import datetime
 import re
 from functools import wraps
-
+from flask import jsonify
 import mysql.connector as connector
 from flask import Flask, render_template, session, request, redirect, url_for, flash, abort
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from mysqldb import DBConnector
+from jinja2 import Environment
 
 app = Flask(__name__)
 application = app
@@ -15,7 +16,7 @@ app.config.from_pyfile('config.py')
 app.config['UPLOAD_FOLDER'] = app.config.get('UPLOAD_FOLDER', 'static/images')
 app.config['DEFAULT_COVER_IMAGE'] = app.config.get('DEFAULT_COVER_IMAGE', 'static/images/default_cover.jpg')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
+app.jinja_env.globals.update(str=str)
 db_connector = DBConnector(app)
 
 login_manager = LoginManager()
@@ -270,23 +271,32 @@ def edit_profile(cursor):
 
 
 
-@app.route('/books')
-@login_required
+@app.route('/books', methods=['GET'])
 @db_operation
 def books(cursor):
-    try:
-        cursor.execute("""
-            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image 
-            FROM books
-            JOIN authors ON books.author_id = authors.id
-            JOIN genres ON books.genre_id = genres.id
-        """, (app.config['DEFAULT_COVER_IMAGE'],))
-        books = cursor.fetchall()
-        print(f"Books fetched: {books}")  # Отладочная информация
-        return render_template('books.html', books=books)
-    except Exception as e:
-        print(f"Error in books route: {e}")
-        abort(500)
+    search = request.args.get('search', '')
+    author = request.args.get('author', '')
+    genre = request.args.get('genre', '')
+
+    query = """
+    SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, 
+           genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image
+    FROM books
+    JOIN authors ON books.author_id = authors.id
+    JOIN genres ON books.genre_id = genres.id
+    WHERE books.title LIKE %s AND authors.id LIKE %s AND genres.id LIKE %s
+    """
+    cursor.execute(query, (app.config['DEFAULT_COVER_IMAGE'], '%' + search + '%', '%' + author + '%', '%' + genre + '%'))
+    books = cursor.fetchall()
+
+    cursor.execute("SELECT id, CONCAT(first_name, ' ', last_name) AS name FROM authors")
+    authors = cursor.fetchall()
+
+    cursor.execute("SELECT id, name FROM genres")
+    genres = cursor.fetchall()
+
+    return render_template('books.html', books=books, authors=authors, genres=genres)
+
 
 
 @app.route('/book/<int:book_id>', methods=['GET', 'POST'])
@@ -369,7 +379,21 @@ def book_detail(cursor, book_id):
         print(f"Error in book_detail route: {e}")
         abort(500)
 
+@app.route('/autocomplete/authors')
+@db_operation
+def autocomplete_authors(cursor):
+    cursor.execute("SELECT CONCAT(first_name, ' ', last_name) AS name FROM authors")
+    authors = [author.name for author in cursor.fetchall()]
+    print(authors)  # Отладочная информация
+    return jsonify(authors)
 
+@app.route('/autocomplete/genres')
+@db_operation
+def autocomplete_genres(cursor):
+    cursor.execute("SELECT name FROM genres")
+    genres = [genre.name for genre in cursor.fetchall()]
+    print(genres)  # Отладочная информация
+    return jsonify(genres)
 
 
 @app.route('/logout')
