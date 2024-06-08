@@ -2,17 +2,67 @@
 {% block title %}{{ book.title }}{% endblock %}
 {% block content %}
     <div class="container">
-        <h1 class="my-4">{{ book.title }}</h1>
+        <h1 class="my-4 text-center">{{ book.title }}</h1>
         <div class="row">
             <div class="col-md-4">
-                <img class="img-fluid" src="{{ url_for('static', filename=book.cover_image) }}" alt="{{ book.title }}">
+                <img class="img-fluid" src="{{ book.cover_image }}" alt="Book cover">
             </div>
-            <div class="col-md-8">
+            <div class="col-md-8 text-center">
                 <h3>Автор: {{ book.author }}</h3>
                 <h4>Жанры: {{ book.genre }}</h4>
                 <p>{{ book.description }}</p>
+                <p>Рейтинг: {{ book.average_rating|round(1)|default('Нет отзывов', true) }}</p>
+                <form method="post">
+                    {% if is_reading %}
+                        <button type="submit" class="btn btn-warning" name="unmark_reading">Отметить чтение книги</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-primary" name="mark_reading">Отметить книгу как читаемую</button>
+                    {% endif %}
+                    {% if is_reserved %}
+                        <button type="submit" class="btn btn-danger" name="unreserve_book">Отменить бронирование книги</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-primary" name="reserve_book">Забронировать книгу</button>
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary mt-2">Читать книгу полностью</button>
+                    <button type="button" class="btn btn-secondary mt-2">Скачать книгу</button>
+                </form>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>Отзывы</h3>
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="review_text" class="form-label">Ваш отзыв</label>
+                        <textarea class="form-control" id="review_text" name="review_text" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rating" class="form-label">Рейтинг</label>
+                        <select class="form-select" id="rating" name="rating" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                </form>
+                <ul class="list-group mt-4">
+                    {% for review in reviews %}
+                        <li class="list-group-item">
+                            <h5>{{ review.username }}</h5>
+                            <p>{{ review.review_text }}</p>
+                            <small>Рейтинг: {{ review.rating }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
-    <pre>{{ book|pprint }}</pre>
 {% endblock %}

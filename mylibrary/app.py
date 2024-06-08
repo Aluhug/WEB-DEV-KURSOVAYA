@@ -211,15 +211,7 @@ def profile(cursor):
         user = cursor.fetchone()
 
         cursor.execute("""
-            SELECT books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
-            FROM reservations
-            JOIN books ON reservations.book_id = books.id
-            JOIN authors ON books.author_id = authors.id
-            WHERE reservations.user_id = %s AND reservations.status = TRUE
-        """, (user_id,))
-        reserved_books = cursor.fetchall()
-        cursor.execute("""
-            SELECT books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
+            SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
             FROM reservations
             JOIN books ON reservations.book_id = books.id
             JOIN authors ON books.author_id = authors.id
@@ -227,10 +219,22 @@ def profile(cursor):
         """, (user_id,))
         reading_books = cursor.fetchall()
 
-        return render_template('profile.html', user=user, reserved_books=reserved_books, reading_books=reading_books)
+        cursor.execute("""
+            SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
+            FROM reservations
+            JOIN books ON reservations.book_id = books.id
+            JOIN authors ON books.author_id = authors.id
+            WHERE reservations.user_id = %s AND reservations.status = FALSE
+        """, (user_id,))
+        reserved_books = cursor.fetchall()
+
+        return render_template('profile.html', user=user, reading_books=reading_books, reserved_books=reserved_books)
     except Exception as e:
         print(f"Error in profile route: {e}")
         abort(500)
+
+
+
 
 @app.route('/books')
 @login_required
@@ -251,25 +255,88 @@ def books(cursor):
         abort(500)
 
 
-@app.route('/book/<int:book_id>')
+@app.route('/book/<int:book_id>', methods=['GET', 'POST'])
 @login_required
 @db_operation
 def book_detail(cursor, book_id):
     try:
+        if request.method == 'POST':
+            if 'mark_reading' in request.form:
+                cursor.execute("""
+                    INSERT INTO reservations (user_id, book_id, start_date, end_date, status) 
+                    VALUES (%s, %s, %s, %s, TRUE)
+                    ON DUPLICATE KEY UPDATE status = VALUES(status)
+                """, (current_user.id, book_id, datetime.date.today(), datetime.date.today() + datetime.timedelta(days=14)))
+                flash('Книга добавлена в список читаемых!', 'success')
+            elif 'unmark_reading' in request.form:
+                cursor.execute("""
+                    DELETE FROM reservations 
+                    WHERE user_id = %s AND book_id = %s AND status = TRUE
+                """, (current_user.id, book_id))
+                flash('Книга убрана из списка читаемых!', 'success')
+            elif 'reserve_book' in request.form:
+                cursor.execute("""
+                    INSERT INTO reservations (user_id, book_id, start_date, end_date, status) 
+                    VALUES (%s, %s, %s, %s, FALSE)
+                """, (current_user.id, book_id, datetime.date.today(), datetime.date.today() + datetime.timedelta(days=14)))
+                flash('Книга забронирована!', 'success')
+            elif 'unreserve_book' in request.form:
+                cursor.execute("""
+                    DELETE FROM reservations 
+                    WHERE user_id = %s AND book_id = %s AND status = FALSE
+                """, (current_user.id, book_id))
+                flash('Бронирование книги отменено!', 'success')
+            elif 'review_text' in request.form and 'rating' in request.form:
+                review_text = request.form['review_text']
+                rating = request.form['rating']
+                cursor.execute("""
+                    INSERT INTO reviews (user_id, book_id, review_text, rating) 
+                    VALUES (%s, %s, %s, %s)
+                """, (current_user.id, book_id, review_text, rating))
+                flash('Ваш отзыв добавлен!', 'success')
+            return redirect(url_for('book_detail', book_id=book_id))
+
         cursor.execute("""
-            SELECT books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, books.cover_image 
+            SELECT books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image,
+                   AVG(reviews.rating) AS average_rating
             FROM books
             JOIN authors ON books.author_id = authors.id
             JOIN genres ON books.genre_id = genres.id
+            LEFT JOIN reviews ON books.id = reviews.book_id
             WHERE books.id = %s
-        """, (book_id,))
+            GROUP BY books.id, authors.first_name, authors.last_name, genres.name, books.description, books.cover_image
+        """, (app.config['DEFAULT_COVER_IMAGE'], book_id))
         book = cursor.fetchone()
         if book is None:
             abort(404)
-        return render_template('book_detail.html', book=book)
+
+        cursor.execute("""
+            SELECT users.username, reviews.review_text, reviews.rating
+            FROM reviews
+            JOIN users ON reviews.user_id = users.id
+            WHERE reviews.book_id = %s
+        """, (book_id,))
+        reviews = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT 1 AS is_reading FROM reservations
+            WHERE user_id = %s AND book_id = %s AND status = TRUE
+        """, (current_user.id, book_id))
+        is_reading = cursor.fetchone() is not None
+
+        cursor.execute("""
+            SELECT 1 AS is_reserved FROM reservations
+            WHERE user_id = %s AND book_id = %s AND status = FALSE
+        """, (current_user.id, book_id))
+        is_reserved = cursor.fetchone() is not None
+
+        return render_template('book_detail.html', book=book, reviews=reviews, is_reading=is_reading, is_reserved=is_reserved)
     except Exception as e:
         print(f"Error in book_detail route: {e}")
         abort(500)
+
+
+
 
 @app.route('/logout')
 @login_required
