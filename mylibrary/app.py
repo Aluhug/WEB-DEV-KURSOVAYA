@@ -199,16 +199,35 @@ def register(cursor):
         print(f"Error in register route: {e}")
         abort(500)
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 @db_operation
 def profile(cursor):
     try:
         user_id = current_user.id
+
+        if request.method == 'POST':
+            username = request.form['username']
+            email = request.form['email']
+            cursor.execute("""
+                UPDATE users SET username = %s, email = %s WHERE id = %s
+            """, (username, email, user_id))
+            flash('Профиль обновлен!', 'success')
+            return redirect(url_for('profile'))
+
         cursor.execute("""
-            SELECT username, login FROM users WHERE id = %s
+            SELECT username, login, email FROM users WHERE id = %s
         """, (user_id,))
         user = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name, reservations.start_date, reservations.end_date 
+            FROM reservations
+            JOIN books ON reservations.book_id = books.id
+            JOIN authors ON books.author_id = authors.id
+            WHERE reservations.user_id = %s AND reservations.status = FALSE
+        """, (user_id,))
+        reserved_books = cursor.fetchall()
 
         cursor.execute("""
             SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
@@ -219,20 +238,35 @@ def profile(cursor):
         """, (user_id,))
         reading_books = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
-            FROM reservations
-            JOIN books ON reservations.book_id = books.id
-            JOIN authors ON books.author_id = authors.id
-            WHERE reservations.user_id = %s AND reservations.status = FALSE
-        """, (user_id,))
-        reserved_books = cursor.fetchall()
-
         return render_template('profile.html', user=user, reading_books=reading_books, reserved_books=reserved_books)
     except Exception as e:
         print(f"Error in profile route: {e}")
         abort(500)
 
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+@db_operation
+def edit_profile(cursor):
+    try:
+        user_id = current_user.id
+        if request.method == 'POST':
+            username = request.form['username']
+            email = request.form['email']
+            cursor.execute("""
+                UPDATE users SET username = %s, email = %s WHERE id = %s
+            """, (username, email, user_id))
+            flash('Профиль обновлен!', 'success')
+            return redirect(url_for('profile'))
+
+        cursor.execute("""
+            SELECT username, email FROM users WHERE id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+
+        return render_template('edit_profile.html', user=user)
+    except Exception as e:
+        print(f"Error in edit_profile route: {e}")
+        abort(500)
 
 
 
@@ -266,7 +300,7 @@ def book_detail(cursor, book_id):
                     INSERT INTO reservations (user_id, book_id, start_date, end_date, status) 
                     VALUES (%s, %s, %s, %s, TRUE)
                     ON DUPLICATE KEY UPDATE status = VALUES(status)
-                """, (current_user.id, book_id, datetime.date.today(), datetime.date.today() + datetime.timedelta(days=14)))
+                """, (current_user.id, book_id, datetime.date.today(), datetime.date.today() + datetime.timedelta(days=180)))
                 flash('Книга добавлена в список читаемых!', 'success')
             elif 'unmark_reading' in request.form:
                 cursor.execute("""
@@ -278,7 +312,7 @@ def book_detail(cursor, book_id):
                 cursor.execute("""
                     INSERT INTO reservations (user_id, book_id, start_date, end_date, status) 
                     VALUES (%s, %s, %s, %s, FALSE)
-                """, (current_user.id, book_id, datetime.date.today(), datetime.date.today() + datetime.timedelta(days=14)))
+                """, (current_user.id, book_id, datetime.date.today(), datetime.date.today() + datetime.timedelta(days=180)))
                 flash('Книга забронирована!', 'success')
             elif 'unreserve_book' in request.form:
                 cursor.execute("""
@@ -347,4 +381,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
