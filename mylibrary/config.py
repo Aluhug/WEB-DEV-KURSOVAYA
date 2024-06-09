@@ -6,3 +6,6 @@ MYSQL_USER = 'std_2478_kursovaya'
 MYSQL_DATABASE = 'std_2478_kursovaya'
 MYSQL_PASSWORD = '123456789'
 MYSQL_HOST = 'std-mysql.ist.mospolytech.ru'
+
+UPLOAD_FOLDER = 'static/uploads'
+DEFAULT_COVER_IMAGE = 'static/images/default_cover.jpg'

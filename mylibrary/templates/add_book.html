@@ -1,47 +1,46 @@
 {% extends 'base.html' %}
 {% block title %}Добавить книгу{% endblock %}
 {% block content %}
-    <div class="container">
-        <h1 class="my-4">Добавить книгу</h1>
-        <form method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="title">Название</label>
-                <input type="text" class="form-control" id="title" name="title" required>
-            </div>
-            <div class="form-group">
-                <label for="first_name">Имя автора</label>
-                <input type="text" class="form-control" id="first_name" name="first_name" required>
-            </div>
-            <div class="form-group">
-                <label for="last_name">Фамилия автора</label>
-                <input type="text" class="form-control" id="last_name" name="last_name" required>
-            </div>
-            <div class="form-group">
-                <label for="middle_name">Отчество автора (необязательно)</label>
-                <input type="text" class="form-control" id="middle_name" name="middle_name">
-            </div>
-            <div class="form-group">
-                <label for="genre">Жанр</label>
-                <input type="text" class="form-control" id="genre" name="genre" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Описание</label>
-                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="rating">Рейтинг</label>
-                <input type="number" step="0.1" class="form-control" id="rating" name="rating" required>
-            </div>
-            <div class="form-group">
-                <label for="cover_image">Обложка книги</label>
-                <input type="file" class="form-control-file" id="cover_image" name="cover_image">
-            </div>
-            <div class="form-group">
-                <label for="book_file">Файл книги</label>
-                <input type="file" class="form-control-file" id="book_file" name="book_file">
-            </div>
-            <button type="submit" class="btn btn-primary">Добавить книгу</button>
-        </form>
-        
-    </div>
+<div class="container mt-5">
+    <h1>Добавить книгу</h1>
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Название</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="author_first_name">Имя автора</label>
+            <input type="text" class="form-control" id="author_first_name" name="author_first_name" required>
+        </div>
+        <div class="form-group">
+            <label for="author_last_name">Фамилия автора</label>
+            <input type="text" class="form-control" id="author_last_name" name="author_last_name" required>
+        </div>
+        <div class="form-group">
+            <label for="author_middle_name">Отчество автора (необязательно)</label>
+            <input type="text" class="form-control" id="author_middle_name" name="author_middle_name">
+        </div>
+        <div class="form-group">
+            <label for="genre">Жанр</label>
+            <input type="text" class="form-control" id="genre" name="genre" required>
+        </div>
+        <div class="form-group">
+            <label for="rating">Рейтинг</label>
+            <input type="number" class="form-control" id="rating" name="rating" min="1" max="10" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="cover_image">Обложка книги</label>
+            <input type="file" class="form-control-file" id="cover_image" name="cover_image" accept="image/*">
+        </div>
+        <div class="form-group">
+            <label for="book_file">Файл книги</label>
+            <input type="file" class="form-control-file" id="book_file" name="book_file" accept=".pdf,.epub,.fb2">
+        </div>
+        <button type="submit" class="btn btn-primary">Добавить книгу</button>
+    </form>
+</div>
 {% endblock %}
