@@ -39,6 +39,7 @@ CREATE TABLE books (
     rating INT NOT NULL CHECK (rating BETWEEN 1 AND 10),
     availability BOOLEAN NOT NULL DEFAULT TRUE,
     cover_image VARCHAR(255);
+    book_file VARCHAR(255);
     FOREIGN KEY (author_id) REFERENCES authors(id),
     FOREIGN KEY (genre_id) REFERENCES genres(id)
 );

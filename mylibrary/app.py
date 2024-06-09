@@ -9,15 +9,19 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, curren
 from werkzeug.utils import secure_filename
 from mysqldb import DBConnector
 from jinja2 import Environment
+from flask import send_file
 
 app = Flask(__name__)
 application = app
 app.config.from_pyfile('config.py')
 app.config['UPLOAD_FOLDER'] = app.config.get('UPLOAD_FOLDER', 'static/images')
 app.config['DEFAULT_COVER_IMAGE'] = app.config.get('DEFAULT_COVER_IMAGE', 'static/images/default_cover.jpg')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'epub', 'mobi'}
 app.jinja_env.globals.update(str=str)
 db_connector = DBConnector(app)
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -74,19 +78,48 @@ def add_book(cursor):
         author = request.form['author']
         genre = request.form['genre']
         description = request.form['description']
-        file = request.files['cover_image']
-        cover_image = app.config['DEFAULT_COVER_IMAGE']
+        rating = float(request.form['rating'])
+        cover_image_file = request.files['cover_image']
+        book_file = request.files['book_file']
 
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        cover_image = app.config['DEFAULT_COVER_IMAGE']
+        book_file_path = None
+
+        if cover_image_file and allowed_file(cover_image_file.filename):
+            filename = secure_filename(cover_image_file.filename)
+            cover_image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             cover_image = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        if book_file and allowed_file(book_file.filename):
+            filename = secure_filename(book_file.filename)
+            book_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            book_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        cursor.execute("SELECT id FROM authors WHERE CONCAT(first_name, ' ', last_name) = %s", (author,))
+        author_id = cursor.fetchone()
         
+        if author_id is None:
+            first_name, last_name = author.split(' ', 1)
+            cursor.execute("INSERT INTO authors (first_name, last_name) VALUES (%s, %s)", (first_name, last_name))
+            author_id = cursor.lastrowid
+        else:
+            author_id = author_id.id
+
+        cursor.execute("SELECT id FROM genres WHERE name = %s", (genre,))
+        genre_id = cursor.fetchone()
+        
+        if genre_id is None:
+            cursor.execute("INSERT INTO genres (name) VALUES (%s)", (genre,))
+            genre_id = cursor.lastrowid
+        else:
+            genre_id = genre_id.id
+
         cursor.execute("""
-            INSERT INTO books (title, author_id, genre_id, description, cover_image) 
-            VALUES (%s, (SELECT id FROM authors WHERE CONCAT(first_name, ' ', last_name) = %s), (SELECT id FROM genres WHERE name = %s), %s, %s)
-        """, (title, author, genre, description, cover_image))
-        flash('Книга успешно добавлена', 'success')
+            INSERT INTO books (title, author_id, genre_id, description, cover_image, book_file, rating) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (title, author_id, genre_id, description, cover_image, book_file_path, rating))
+        
+        flash('Книга успешно добавлена!', 'success')
         return redirect(url_for('books'))
     return render_template('add_book.html')
 
@@ -341,14 +374,14 @@ def book_detail(cursor, book_id):
             return redirect(url_for('book_detail', book_id=book_id))
 
         cursor.execute("""
-            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image,
-                   AVG(reviews.rating) AS average_rating
+            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, 
+                   COALESCE(books.cover_image, %s) AS cover_image, AVG(reviews.rating) AS average_rating, books.book_file
             FROM books
             JOIN authors ON books.author_id = authors.id
             JOIN genres ON books.genre_id = genres.id
             LEFT JOIN reviews ON books.id = reviews.book_id
             WHERE books.id = %s
-            GROUP BY books.id, authors.first_name, authors.last_name, genres.name, books.description, books.cover_image
+            GROUP BY books.id, authors.first_name, authors.last_name, genres.name, books.description, books.cover_image, books.book_file
         """, (app.config['DEFAULT_COVER_IMAGE'], book_id))
         book = cursor.fetchone()
         if book is None:
@@ -378,6 +411,52 @@ def book_detail(cursor, book_id):
     except Exception as e:
         print(f"Error in book_detail route: {e}")
         abort(500)
+
+
+@app.route('/download_book/<int:book_id>')
+@login_required
+@db_operation
+def download_book(cursor, book_id):
+    try:
+        cursor.execute("SELECT book_file FROM books WHERE id = %s", (book_id,))
+        book = cursor.fetchone()
+        if book is None or not book.book_file:
+            flash('Файл книги не найден!', 'danger')
+            return redirect(url_for('book_detail', book_id=book_id))
+        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], book.book_file)
+        if not os.path.exists(file_path):
+            flash('Файл книги не найден!', 'danger')
+            return redirect(url_for('book_detail', book_id=book_id))
+
+        return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        print(f"Error in download_book route: {e}")
+        flash('Произошла ошибка при попытке скачать книгу.', 'danger')
+        return redirect(url_for('book_detail', book_id=book_id))
+
+
+@app.route('/read_book/<int:book_id>')
+@login_required
+@db_operation
+def read_book(cursor, book_id):
+    try:
+        cursor.execute("SELECT book_file FROM books WHERE id = %s", (book_id,))
+        book = cursor.fetchone()
+        if book is None or not book.book_file:
+            flash('Файл книги не найден!', 'danger')
+            return redirect(url_for('book_detail', book_id=book_id))
+        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], book.book_file)
+        if not os.path.exists(file_path):
+            flash('Файл книги не найден!', 'danger')
+            return redirect(url_for('book_detail', book_id=book_id))
+
+        return send_file(file_path)
+    except Exception as e:
+        print(f"Error in read_book route: {e}")
+        flash('Произошла ошибка при попытке открыть книгу.', 'danger')
+        return redirect(url_for('book_detail', book_id=book_id))
 
 @app.route('/autocomplete/authors')
 @db_operation
