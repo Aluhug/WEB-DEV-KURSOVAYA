@@ -341,7 +341,7 @@ def book_detail(cursor, book_id):
             return redirect(url_for('book_detail', book_id=book_id))
 
         cursor.execute("""
-            SELECT books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image,
+            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image,
                    AVG(reviews.rating) AS average_rating
             FROM books
             JOIN authors ON books.author_id = authors.id
@@ -394,6 +394,22 @@ def autocomplete_genres(cursor):
     genres = [genre.name for genre in cursor.fetchall()]
     print(genres)  # Отладочная информация
     return jsonify(genres)
+
+@app.route('/admin/delete_book/<int:book_id>', methods=['POST'])
+@admin_required
+@db_operation
+def delete_book(cursor, book_id):
+    try:
+        cursor.execute("DELETE FROM reviews WHERE book_id = %s", (book_id,))
+        cursor.execute("DELETE FROM reservations WHERE book_id = %s", (book_id,))
+        cursor.execute("DELETE FROM books WHERE id = %s", (book_id,))
+        flash('Книга успешно удалена!', 'success')
+        return redirect(url_for('books'))  
+    except Exception as e:
+        print(f"Error in delete_book route: {e}")
+        abort(500)
+
+
 
 
 @app.route('/logout')

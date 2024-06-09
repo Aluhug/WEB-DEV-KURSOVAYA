@@ -11,34 +11,37 @@
                 <h3>Автор: {{ book.author }}</h3>
                 <h4>Жанры: {{ book.genre }}</h4>
                 <p>{{ book.description }}</p>
-                <p>Рейтинг: {{ book.average_rating|round(1)|default('Нет отзывов', true) }}</p>
+                <p>Рейтинг: {{ book.average_rating|round(1) }}</p>
                 <form method="post">
                     {% if is_reading %}
-                        <button type="submit" class="btn btn-warning mt-2" name="unmark_reading">Отметить чтение книги</button>
+                        <button type="submit" name="unmark_reading" class="btn btn-danger">Убрать из читаемых</button>
                     {% else %}
-                        <button type="submit" class="btn btn-primary mt-2" name="mark_reading">Отметить книгу как читаемую</button>
+                        <button type="submit" name="mark_reading" class="btn btn-primary">Отметить как читаемую</button>
                     {% endif %}
                     {% if is_reserved %}
-                        <button type="submit" class="btn btn-danger mt-2" name="unreserve_book">Отменить бронирование книги</button>
+                        <button type="submit" name="unreserve_book" class="btn btn-warning">Отменить бронирование</button>
                     {% else %}
-                        <button type="submit" class="btn btn-primary mt-2" name="reserve_book">Забронировать книгу</button>
+                        <button type="submit" name="reserve_book" class="btn btn-success">Забронировать книгу</button>
                     {% endif %}
-                    <button type="button" class="btn btn-secondary mt-2">Читать книгу полностью</button>
-                    <button type="button" class="btn btn-secondary mt-2">Скачать книгу</button>
                 </form>
+                <a href="#" class="btn btn-secondary mt-3">Читать книгу полностью</a>
+                <a href="#" class="btn btn-secondary mt-3">Скачать книгу</a>
+                {% if current_user.role_id == 2 %}
+                    <button class="btn btn-danger mt-3 delete-book-btn" data-book-id="{{ book.id }}">Удалить книгу</button>
+                {% endif %}
             </div>
         </div>
         <div class="row mt-4">
-            <div class="col-12">
-                <h3>Отзывы</h3>
+            <div class="col-md-12">
+                <h4>Отзывы</h4>
                 <form method="post">
-                    <div class="mb-3">
-                        <label for="review_text" class="form-label">Ваш отзыв</label>
+                    <div class="form-group">
+                        <label for="review_text">Ваш отзыв:</label>
                         <textarea class="form-control" id="review_text" name="review_text" rows="3" required></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="rating" class="form-label">Рейтинг</label>
-                        <select class="form-select" id="rating" name="rating" required>
+                    <div class="form-group">
+                        <label for="rating">Рейтинг:</label>
+                        <select class="form-control" id="rating" name="rating" required>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
@@ -53,15 +56,17 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Отправить отзыв</button>
                 </form>
-                <ul class="list-group mt-4">
+                <div class="mt-4">
                     {% for review in reviews %}
-                        <li class="list-group-item">
-                            <h5>{{ review.username }}</h5>
-                            <p>{{ review.review_text }}</p>
-                            <small>Рейтинг: {{ review.rating }}</small>
-                        </li>
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ review.username }}</h5>
+                                <p class="card-text">{{ review.review_text }}</p>
+                                <p class="card-text">Рейтинг: {{ review.rating }}</p>
+                            </div>
+                        </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         </div>
     </div>
