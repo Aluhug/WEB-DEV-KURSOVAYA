@@ -18,7 +18,7 @@ app.config.from_pyfile('config.py')
 app.config['UPLOAD_FOLDER'] = app.config.get('UPLOAD_FOLDER', 'static/uploads')
 app.config['DEFAULT_COVER_IMAGE'] = app.config.get('DEFAULT_COVER_IMAGE', 'static/images/default_cover.jpg')
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-ALLOWED_BOOK_EXTENSIONS = {'pdf', 'epub', 'fb2'}
+ALLOWED_BOOK_EXTENSIONS = {'pdf'}
 app.jinja_env.globals.update(str=str)
 db_connector = DBConnector(app)
 
@@ -254,45 +254,39 @@ def register(cursor):
 @login_required
 @db_operation
 def profile(cursor):
-    try:
-        user_id = current_user.id
-
-        if request.method == 'POST':
-            username = request.form['username']
-            email = request.form['email']
+    if request.method == 'POST':
+        if current_user.role_id != 2:
+            wish_text = request.form['wish_text']
             cursor.execute("""
-                UPDATE users SET username = %s, email = %s WHERE id = %s
-            """, (username, email, user_id))
-            flash('Профиль обновлен!', 'success')
+                INSERT INTO wishes (user_id, wish_text) 
+                VALUES (%s, %s)
+            """, (current_user.id, wish_text))
+            flash('Ваше пожелание отправлено!', 'success')
             return redirect(url_for('profile'))
+    cursor.execute("SELECT id, username, email FROM users WHERE id = %s", (current_user.id,))
+    user = cursor.fetchone()
+    
+    cursor.execute("""
+        SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name, reservations.start_date, reservations.end_date
+        FROM reservations
+        JOIN books ON reservations.book_id = books.id
+        JOIN authors ON books.author_id = authors.id
+        WHERE reservations.user_id = %s AND reservations.status = FALSE
+    """, (current_user.id,))
+    reserved_books = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT username, login, email FROM users WHERE id = %s
-        """, (user_id,))
-        user = cursor.fetchone()
+    cursor.execute("""
+        SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name
+        FROM reservations
+        JOIN books ON reservations.book_id = books.id
+        JOIN authors ON books.author_id = authors.id
+        WHERE reservations.user_id = %s AND reservations.status = TRUE
+    """, (current_user.id,))
+    reading_books = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name, reservations.start_date, reservations.end_date 
-            FROM reservations
-            JOIN books ON reservations.book_id = books.id
-            JOIN authors ON books.author_id = authors.id
-            WHERE reservations.user_id = %s AND reservations.status = FALSE
-        """, (user_id,))
-        reserved_books = cursor.fetchall()
+    return render_template('profile.html', user=user, reserved_books=reserved_books, reading_books=reading_books)
 
-        cursor.execute("""
-            SELECT books.id AS book_id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name 
-            FROM reservations
-            JOIN books ON reservations.book_id = books.id
-            JOIN authors ON books.author_id = authors.id
-            WHERE reservations.user_id = %s AND reservations.status = TRUE
-        """, (user_id,))
-        reading_books = cursor.fetchall()
 
-        return render_template('profile.html', user=user, reading_books=reading_books, reserved_books=reserved_books)
-    except Exception as e:
-        print(f"Error in profile route: {e}")
-        abort(500)
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -585,18 +579,25 @@ def autocomplete_genres(cursor):
     return jsonify(genres)
 
 @app.route('/admin/delete_book/<int:book_id>', methods=['POST'])
+@login_required
 @admin_required
 @db_operation
 def delete_book(cursor, book_id):
-    try:
-        cursor.execute("DELETE FROM reviews WHERE book_id = %s", (book_id,))
-        cursor.execute("DELETE FROM reservations WHERE book_id = %s", (book_id,))
-        cursor.execute("DELETE FROM books WHERE id = %s", (book_id,))
-        flash('Книга успешно удалена!', 'success')
-        return redirect(url_for('books'))  
-    except Exception as e:
-        print(f"Error in delete_book route: {e}")
-        abort(500)
+    if current_user.role_id == 2:  # Проверяем, что пользователь - администратор (библиотекарь)
+        try:
+            cursor.execute("DELETE FROM reviews WHERE book_id = %s", (book_id,))
+            cursor.execute("DELETE FROM reservations WHERE book_id = %s", (book_id,))
+            cursor.execute("DELETE FROM books WHERE id = %s", (book_id,))
+            cursor.connection.commit()  # Используем явное соединение для commit
+            flash('Книга успешно удалена!', 'success')
+        except Exception as e:
+            flash(f'Ошибка при удалении книги: {str(e)}', 'danger')
+    else:
+        flash('У вас нет прав для выполнения этого действия.', 'danger')
+    return redirect(url_for('books'))
+
+
+
 
 @app.route('/wishes', methods=['GET', 'POST'])
 @login_required

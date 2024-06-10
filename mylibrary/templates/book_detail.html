@@ -5,13 +5,13 @@
         <h1 class="my-4 text-center">{{ book.title }}</h1>
         <div class="row">
             <div class="col-md-4">
-                <img class="img-fluid" src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="Book cover">
+                <img class="img-fluid" src="{{ url_for('static', filename=book.cover_image) }}" alt="Book cover">
             </div>
             <div class="col-md-8 text-center">
                 <h3>Автор: {{ book.author }}</h3>
-                <h4>Жанр: {{ book.genre }}</h4>
+                <h4>Жанры: {{ book.genre }}</h4>
                 <p>{{ book.description }}</p>
-                <p>Рейтинг: {% if book.average_rating %}{{ book.average_rating|round(1) }}{% else %}Рейтинг отсутствует{% endif %}</p>
+                <p>Рейтинг: {{ book.average_rating|round(1) if book.average_rating else 'Рейтинг отсутствует' }}</p>
                 <form method="post">
                     {% if is_reading %}
                         <button type="submit" name="unmark_reading" class="btn btn-danger">Убрать из читаемых</button>
@@ -27,7 +27,7 @@
                 <a href="{{ url_for('read_book', book_id=book.id) }}" class="btn btn-secondary mt-3">Читать книгу полностью</a>
                 <a href="{{ url_for('download_book', book_id=book.id) }}" class="btn btn-secondary mt-3">Скачать книгу</a>
                 {% if current_user.role_id == 2 %}
-                    <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-info mt-3">Редактировать книгу</a>
+                    <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-primary mt-3">Редактировать книгу</a>
                     <button class="btn btn-danger mt-3 delete-book-btn" data-book-id="{{ book.id }}">Удалить книгу</button>
                 {% endif %}
             </div>
@@ -72,3 +72,4 @@
         </div>
     </div>
 {% endblock %}
+

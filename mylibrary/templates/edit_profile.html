@@ -13,6 +13,7 @@
                 <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
             </div>
             <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            <a href="{{ url_for('profile') }}" class="btn btn-secondary">Отменить</a>
         </form>
     </div>
 {% endblock %}

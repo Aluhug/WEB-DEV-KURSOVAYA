@@ -37,6 +37,7 @@
             <input type="file" class="form-control-file" id="book_file" name="book_file">
         </div>
         <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+        <a href="{{ url_for('book_detail', book_id=book.id) }}" class="btn btn-secondary">Отменить</a>
     </form>
 </div>
 {% endblock %}

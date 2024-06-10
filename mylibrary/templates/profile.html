@@ -1,52 +1,47 @@
 {% extends 'base.html' %}
-{% block title %}Профиль{% endblock %}
+{% block title %}Профиль пользователя{% endblock %}
 {% block content %}
-    <div class="container">
-        <h1 class="my-4">Профиль пользователя</h1>
+<div class="container">
+    <h1 class="my-4">Профиль пользователя</h1>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">{{ user.username }}</h4>
+            <p class="card-text"><strong>Логин:</strong> {{ user.login }}</p>
+            <p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
+            <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Редактировать профиль</a>
+        </div>
+    </div>
+    <h4>Забронированные книги</h4>
+    {% for book in reserved_books %}
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="card-title">{{ user.username }}</h5>
-                <p class="card-text">Логин: {{ user.login }}</p>
-                <p class="card-text">Email: {{ user.email }}</p>
-                <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Редактировать профиль</a>
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text">Автор: {{ book.author_first_name }} {{ book.author_last_name }}</p>
+                <p class="card-text">Дата начала: {{ book.start_date }}</p>
+                <p class="card-text">Дата окончания: {{ book.end_date }}</p>
+                <a href="{{ url_for('book_detail', book_id=book.book_id) }}" class="btn btn-primary">Подробнее</a>
             </div>
         </div>
-
-        <h3>Забронированные книги</h3>
-        <ul class="list-group mb-4">
-            {% for book in reserved_books %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ book.title }}</strong> by {{ book.author_first_name }} {{ book.author_last_name }}
-                        <br>
-                        <small>Дата начала: {{ book.start_date }}</small>
-                        <br>
-                        <small>Дата конца: {{ book.end_date }}</small>
-                    </div>
-                    <a href="{{ url_for('book_detail', book_id=book.book_id) }}" class="btn btn-link">Подробнее</a>
-                </li>
-            {% endfor %}
-        </ul>
-
-        <h3>Книги, которые читаете сейчас</h3>
-        <ul class="list-group mb-4">
-            {% for book in reading_books %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ book.title }}</strong> by {{ book.author_first_name }} {{ book.author_last_name }}
-                    </div>
-                    <a href="{{ url_for('book_detail', book_id=book.book_id) }}" class="btn btn-link">Подробнее</a>
-                </li>
-            {% endfor %}
-        </ul>
-
-        <h3>Форма для обратной связи</h3>
-        <form method="post" action="">
-            <div class="mb-3">
-                <label for="feedback" class="form-label">Ваш отзыв</label>
-                <textarea class="form-control" id="feedback" name="feedback" rows="3" required></textarea>
+    {% endfor %}
+    <h4>Книги, которые читаете сейчас</h4>
+    {% for book in reading_books %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text">Автор: {{ book.author_first_name }} {{ book.author_last_name }}</p>
+                <a href="{{ url_for('book_detail', book_id=book.book_id) }}" class="btn btn-primary">Подробнее</a>
             </div>
-            <button type="submit" class="btn btn-primary">Отправить</button>
+        </div>
+    {% endfor %}
+    {% if current_user.role_id != 2 %}
+        <h4>Форма для обратной связи</h4>
+        <form method="post">
+            <div class="form-group">
+                <label for="wish_text">Ваше пожелание:</label>
+                <textarea class="form-control" id="wish_text" name="wish_text" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить пожелание</button>
         </form>
-    </div>
+    {% endif %}
+</div>
 {% endblock %}
