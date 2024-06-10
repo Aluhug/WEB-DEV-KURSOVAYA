@@ -39,8 +39,9 @@
                             </div>
                             <div class="col-md-8">
                                 <div class="card-body">
-                                    <h4 class="card-title">{{ book.title }}</h4>
-                                    <h5>{{ book.author }}</h5>
+                                    <h3 class="card-title">{{ book.title }}</h3>
+                                    <h4>{{ book.author }}</h4>
+                                    <h5>Жанр: {{ book.genre }}</h5>
                                     <p class="card-text">{{ book.description }}</p>
                                     <a href="{{ url_for('book_detail', book_id=book.id) }}" class="btn btn-primary">Подробнее</a>
                                 </div>

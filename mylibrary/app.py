@@ -457,6 +457,99 @@ def read_book(cursor, book_id):
         abort(500)
 
 
+@app.route('/admin/edit_book/<int:book_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+@db_operation
+def edit_book(cursor, book_id):
+    try:
+        if request.method == 'POST':
+            title = request.form['title']
+            author_first_name = request.form['author_first_name']
+            author_last_name = request.form['author_last_name']
+            author_middle_name = request.form.get('author_middle_name', None)
+            genre = request.form['genre']
+            description = request.form['description']
+            cover_image = request.files['cover_image']
+            book_file = request.files['book_file']
+
+            if cover_image and allowed_file(cover_image.filename, ALLOWED_IMAGE_EXTENSIONS):
+                cover_image_filename = secure_filename(cover_image.filename)
+                cover_image.save(os.path.join(app.config['UPLOAD_FOLDER'], cover_image_filename))
+            else:
+                cover_image_filename = None
+
+            if book_file and allowed_file(book_file.filename, ALLOWED_BOOK_EXTENSIONS):
+                book_file_filename = secure_filename(book_file.filename)
+                book_file.save(os.path.join(app.config['UPLOAD_FOLDER'], book_file_filename))
+            else:
+                book_file_filename = None
+
+            # Обновление автора
+            cursor.execute("""
+                INSERT INTO authors (first_name, last_name, middle_name)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE first_name=VALUES(first_name), last_name=VALUES(last_name), middle_name=VALUES(middle_name)
+            """, (author_first_name, author_last_name, author_middle_name))
+            cursor.execute("SELECT id FROM authors WHERE first_name = %s AND last_name = %s AND middle_name = %s",
+                           (author_first_name, author_last_name, author_middle_name))
+            author_id = cursor.fetchone().id
+
+            # Обновление жанра
+            cursor.execute("""
+                INSERT INTO genres (name)
+                VALUES (%s)
+                ON DUPLICATE KEY UPDATE name=VALUES(name)
+            """, (genre,))
+            cursor.execute("SELECT id FROM genres WHERE name = %s", (genre,))
+            genre_id = cursor.fetchone().id
+
+            # Обновление книги
+            if cover_image_filename and book_file_filename:
+                cursor.execute("""
+                    UPDATE books
+                    SET title = %s, author_id = %s, genre_id = %s, description = %s, cover_image = %s, book_file = %s
+                    WHERE id = %s
+                """, (title, author_id, genre_id, description, cover_image_filename, book_file_filename, book_id))
+            elif cover_image_filename:
+                cursor.execute("""
+                    UPDATE books
+                    SET title = %s, author_id = %s, genre_id = %s, description = %s, cover_image = %s
+                    WHERE id = %s
+                """, (title, author_id, genre_id, description, cover_image_filename, book_id))
+            elif book_file_filename:
+                cursor.execute("""
+                    UPDATE books
+                    SET title = %s, author_id = %s, genre_id = %s, description = %s, book_file = %s
+                    WHERE id = %s
+                """, (title, author_id, genre_id, description, book_file_filename, book_id))
+            else:
+                cursor.execute("""
+                    UPDATE books
+                    SET title = %s, author_id = %s, genre_id = %s, description = %s
+                    WHERE id = %s
+                """, (title, author_id, genre_id, description, book_id))
+
+            flash('Книга успешно обновлена!', 'success')
+            return redirect(url_for('book_detail', book_id=book_id))
+
+        cursor.execute("""
+            SELECT books.id, books.title, authors.first_name AS author_first_name, authors.last_name AS author_last_name, 
+                   authors.middle_name AS author_middle_name, genres.name AS genre, books.description, 
+                   COALESCE(books.cover_image, %s) AS cover_image, books.book_file
+            FROM books
+            JOIN authors ON books.author_id = authors.id
+            JOIN genres ON books.genre_id = genres.id
+            WHERE books.id = %s
+        """, (app.config['DEFAULT_COVER_IMAGE'], book_id))
+        book = cursor.fetchone()
+        if book is None:
+            abort(404)
+
+        return render_template('edit_book.html', book=book)
+    except Exception as e:
+        print(f"Error in edit_book route: {e}")
+        abort(500)
 
 
 
