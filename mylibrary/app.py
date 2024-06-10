@@ -315,28 +315,50 @@ def edit_profile(cursor):
 
 
 
-@app.route('/books', methods=['GET'])
+@app.route('/books', methods=['GET', 'POST'])
+@login_required
 @db_operation
 def books(cursor):
-    search = request.args.get('search', '')
-    author = request.args.get('author', '')
-    genre = request.args.get('genre', '')
+    if request.method == 'POST':
+        title = request.form.get('title')
+        author = request.form.get('author')
+        genre = request.form.get('genre')
 
-    query = """
-    SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, 
-           genres.name AS genre, books.description, COALESCE(books.cover_image, %s) AS cover_image
-    FROM books
-    JOIN authors ON books.author_id = authors.id
-    JOIN genres ON books.genre_id = genres.id
-    WHERE books.title LIKE %s AND authors.id LIKE %s AND genres.id LIKE %s
-    """
-    cursor.execute(query, (app.config['DEFAULT_COVER_IMAGE'], '%' + search + '%', '%' + author + '%', '%' + genre + '%'))
+        query = """
+            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, books.cover_image
+            FROM books
+            JOIN authors ON books.author_id = authors.id
+            JOIN genres ON books.genre_id = genres.id
+            WHERE 1=1
+        """
+        params = []
+
+        if title:
+            query += " AND books.title LIKE %s"
+            params.append(f"%{title}%")
+
+        if author:
+            query += " AND CONCAT(authors.first_name, ' ', authors.last_name) = %s"
+            params.append(author)
+
+        if genre:
+            query += " AND genres.name = %s"
+            params.append(genre)
+
+        cursor.execute(query, params)
+    else:
+        cursor.execute("""
+            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, books.cover_image
+            FROM books
+            JOIN authors ON books.author_id = authors.id
+            JOIN genres ON books.genre_id = genres.id
+        """)
     books = cursor.fetchall()
 
-    cursor.execute("SELECT id, CONCAT(first_name, ' ', last_name) AS name FROM authors")
+    cursor.execute("SELECT DISTINCT CONCAT(authors.first_name, ' ', authors.last_name) AS author FROM authors")
     authors = cursor.fetchall()
 
-    cursor.execute("SELECT id, name FROM genres")
+    cursor.execute("SELECT DISTINCT name AS genre FROM genres")
     genres = cursor.fetchall()
 
     return render_template('books.html', books=books, authors=authors, genres=genres)
