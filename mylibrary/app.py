@@ -598,7 +598,33 @@ def delete_book(cursor, book_id):
         print(f"Error in delete_book route: {e}")
         abort(500)
 
+@app.route('/wishes', methods=['GET', 'POST'])
+@login_required
+@db_operation
+def wishes(cursor):
+    try:
+        if request.method == 'POST' and current_user.role_id != 2:  # Только обычные пользователи могут оставлять пожелания
+            wish_text = request.form['wish_text']
+            cursor.execute("""
+                INSERT INTO wishes (user_id, wish_text) VALUES (%s, %s)
+            """, (current_user.id, wish_text))
+            flash('Ваше пожелание отправлено!', 'success')
+            return redirect(url_for('wishes'))
 
+        if current_user.role_id == 2:  # Библиотекари могут просматривать пожелания
+            cursor.execute("""
+                SELECT wishes.id, users.username, wishes.wish_text, wishes.created_at
+                FROM wishes
+                JOIN users ON wishes.user_id = users.id
+                ORDER BY wishes.created_at DESC
+            """)
+            all_wishes = cursor.fetchall()
+            return render_template('view_wishes.html', wishes=all_wishes)
+        
+        return render_template('wishes.html')
+    except Exception as e:
+        print(f"Error in wishes route: {e}")
+        abort(500)
 
 
 @app.route('/logout')

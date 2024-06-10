@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Просмотр пожеланий{% endblock %}
+{% block content %}
+    <div class="container">
+        <h1 class="my-4">Пожелания пользователей</h1>
+        <div class="list-group">
+            {% for wish in wishes %}
+                <div class="list-group-item">
+                    <h5 class="mb-1">{{ wish.username }}</h5>
+                    <p class="mb-1">{{ wish.wish_text }}</p>
+                    <small>{{ wish.created_at }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

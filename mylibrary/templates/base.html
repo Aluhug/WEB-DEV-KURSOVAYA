@@ -34,6 +34,13 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('users') }}">Пользователи</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('wishes') }}">Просмотр пожеланий</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('wishes') }}">Оставить пожелание</a>
+                            </li>
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('logout') }}">Выйти</a>
