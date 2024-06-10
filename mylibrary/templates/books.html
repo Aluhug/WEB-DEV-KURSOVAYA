@@ -35,7 +35,8 @@
                     <div class="card h-100">
                         <div class="row no-gutters">
                             <div class="col-md-4">
-                                <a href="#"><img class="card-img-top" src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="{{ book.title }}"></a>                            </div>
+                                <img class="card-img-top" src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="{{ book.title }}">                    
+                            </div>
                             <div class="col-md-8">
                                 <div class="card-body">
                                     <h4 class="card-title">{{ book.title }}</h4>

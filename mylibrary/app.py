@@ -15,7 +15,7 @@ from flask import send_from_directory
 app = Flask(__name__)
 application = app
 app.config.from_pyfile('config.py')
-app.config['UPLOAD_FOLDER'] = app.config.get('UPLOAD_FOLDER', 'static/images')
+app.config['UPLOAD_FOLDER'] = app.config.get('UPLOAD_FOLDER', 'static/uploads')
 app.config['DEFAULT_COVER_IMAGE'] = app.config.get('DEFAULT_COVER_IMAGE', 'static/images/default_cover.jpg')
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 ALLOWED_BOOK_EXTENSIONS = {'pdf', 'epub', 'fb2'}
@@ -437,14 +437,28 @@ def book_detail(cursor, book_id):
 @db_operation
 def read_book(cursor, book_id):
     try:
-        cursor.execute("SELECT book_file FROM books WHERE id = %s", (book_id,))
+        cursor.execute("""
+            SELECT book_file
+            FROM books
+            WHERE id = %s
+        """, (book_id,))
         book = cursor.fetchone()
-        if book is None or book[0] is None:
+        if book is None:
             abort(404)
-        return send_from_directory(app.config['UPLOAD_FOLDER'], book[0].split('/')[-1])
+
+        book_file = book[0]
+        book_file_path = os.path.join(app.config['UPLOAD_FOLDER'], book_file)
+        if not os.path.exists(book_file_path):
+            abort(404)
+
+        return render_template('read_book.html', book_file=book_file)
     except Exception as e:
-        print(f"Error in read_book: {e}")
+        print(f"Error in read_book route: {e}")
         abort(500)
+
+
+
+
 
 @app.route('/download_book/<int:book_id>')
 @login_required

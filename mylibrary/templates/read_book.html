@@ -3,6 +3,7 @@
 {% block content %}
     <div class="container">
         <h1 class="my-4 text-center">Читать книгу</h1>
-        <iframe src="{{ url_for('static', filename=book_file) }}" width="100%" height="600px"></iframe>
+        <iframe src="{{ url_for('static', filename='uploads/' + book_file) }}" style="width: 100%; height: 800px;" frameborder="0"></iframe>
+        <a href="{{ url_for('book_detail', book_id=request.view_args.book_id) }}" class="btn btn-primary mt-3">Назад</a>
     </div>
 {% endblock %}
