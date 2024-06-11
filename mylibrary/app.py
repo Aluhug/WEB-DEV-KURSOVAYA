@@ -59,7 +59,8 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role_id != 2:
-            abort(403)
+            flash('У вас недостаточно прав для этого', 'danger')
+            return redirect(request.referrer or url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -332,40 +333,32 @@ def edit_profile(cursor):
 @login_required
 @db_operation
 def books(cursor):
-    if request.method == 'POST':
-        title = request.form.get('title')
-        author = request.form.get('author')
-        genre = request.form.get('genre')
+    title = request.form.get('title') if request.method == 'POST' else request.args.get('title')
+    author = request.form.get('author') if request.method == 'POST' else request.args.get('author')
+    genre = request.form.get('genre') if request.method == 'POST' else request.args.get('genre')
 
-        query = """
-            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, books.cover_image
-            FROM books
-            JOIN authors ON books.author_id = authors.id
-            JOIN genres ON books.genre_id = genres.id
-            WHERE 1=1
-        """
-        params = []
+    query = """
+        SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, books.cover_image
+        FROM books
+        JOIN authors ON books.author_id = authors.id
+        JOIN genres ON books.genre_id = genres.id
+        WHERE 1=1
+    """
+    params = []
 
-        if title:
-            query += " AND books.title LIKE %s"
-            params.append(f"%{title}%")
+    if title:
+        query += " AND books.title LIKE %s"
+        params.append(f"%{title}%")
 
-        if author:
-            query += " AND CONCAT(authors.first_name, ' ', authors.last_name) = %s"
-            params.append(author)
+    if author:
+        query += " AND CONCAT(authors.first_name, ' ', authors.last_name) = %s"
+        params.append(author)
 
-        if genre:
-            query += " AND genres.name = %s"
-            params.append(genre)
+    if genre:
+        query += " AND genres.name = %s"
+        params.append(genre)
 
-        cursor.execute(query, params)
-    else:
-        cursor.execute("""
-            SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, books.cover_image
-            FROM books
-            JOIN authors ON books.author_id = authors.id
-            JOIN genres ON books.genre_id = genres.id
-        """)
+    cursor.execute(query, params)
     books = cursor.fetchall()
 
     cursor.execute("SELECT DISTINCT CONCAT(authors.first_name, ' ', authors.last_name) AS author FROM authors")
@@ -374,7 +367,7 @@ def books(cursor):
     cursor.execute("SELECT DISTINCT name AS genre FROM genres")
     genres = cursor.fetchall()
 
-    return render_template('books.html', books=books, authors=authors, genres=genres)
+    return render_template('books.html', books=books, authors=authors, genres=genres, title=title, author=author, genre=genre)
 
 #Подробная информация о книге
 @app.route('/book/<int:book_id>', methods=['GET', 'POST'])
@@ -614,6 +607,7 @@ def delete_book(cursor, book_id):
 
 #Пожелания
 @app.route('/wishes', methods=['GET', 'POST'])
+@admin_required
 @login_required
 @db_operation
 def wishes(cursor):

@@ -4,17 +4,17 @@
     <div class="container">
         <h1 class="my-4">Список книг</h1>
         <form method="post" class="form-inline mb-4">
-            <input type="text" name="title" class="form-control mr-2" placeholder="Поиск по названию книги">
+            <input type="text" name="title" class="form-control mr-2" placeholder="Поиск по названию книги" value="{{ title }}">
             <select name="author" class="form-control mr-2">
                 <option value="">Выберите автора</option>
-                {% for author in authors %}
-                    <option value="{{ author.author }}">{{ author.author }}</option>
+                {% for author_item in authors %}
+                    <option value="{{ author_item.author }}" {% if author == author_item.author %}selected{% endif %}>{{ author_item.author }}</option>
                 {% endfor %}
             </select>
             <select name="genre" class="form-control mr-2">
                 <option value="">Выберите жанр</option>
-                {% for genre in genres %}
-                    <option value="{{ genre.genre }}">{{ genre.genre }}</option>
+                {% for genre_item in genres %}
+                    <option value="{{ genre_item.genre }}" {% if genre == genre_item.genre %}selected{% endif %}>{{ genre_item.genre }}</option>
                 {% endfor %}
             </select>
             <button type="submit" class="btn btn-primary">Поиск</button>
@@ -25,7 +25,7 @@
                     <div class="card h-100">
                         <div class="row no-gutters">
                             <div class="col-md-4">
-                                <img class="card-img-top" src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="{{ book.title }}">                    
+                                <img class="card-img-top" src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="{{ book.title }}">
                             </div>
                             <div class="col-md-8">
                                 <div class="card-body">
