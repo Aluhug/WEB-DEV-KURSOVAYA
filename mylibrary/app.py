@@ -1,16 +1,12 @@
-import os
-import datetime
-import re
+import os, datetime, re
 from functools import wraps
 from flask import jsonify
 import mysql.connector as connector
-from flask import Flask, render_template, session, request, redirect, url_for, flash, abort
+from flask import Flask, render_template, session, request, redirect, url_for, flash, abort, send_file, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from mysqldb import DBConnector
 from jinja2 import Environment
-from flask import send_file
-from flask import send_from_directory
 
 app = Flask(__name__)
 application = app
@@ -44,7 +40,7 @@ def db_operation(func):
                 connection.commit()
         except Exception as e:
             connection.rollback()
-            print(f"Error in {func.__name__}: {e}")  # Добавление отладочной информации
+            print(f"Error in {func.__name__}: {e}") 
             raise e
         return result
     return wrapper
