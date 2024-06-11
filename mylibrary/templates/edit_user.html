@@ -25,4 +25,8 @@
         <button type="submit" class="btn btn-primary w-100 mb-3">Сохранить изменения</button>
         <a href="{{ url_for('users') }}" class="btn btn-secondary">Отменить</a>
     </form>
+
+    <form class="w-50 mx-auto mt-3" method="POST" action="{{ url_for('delete_user', user_id=user.id) }}">
+        <button type="submit" class="btn btn-danger w-100">Удалить пользователя</button>
+    </form>
 {% endblock %}

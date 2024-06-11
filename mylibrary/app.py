@@ -177,6 +177,27 @@ def edit_user(cursor, user_id):
 def index():
     return render_template('index.html')
 
+@app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+@db_operation
+def delete_user(cursor, user_id):
+    if current_user.role_id == 2:  # Проверяем, что пользователь - администратор (библиотекарь)
+        connection = db_connector.connect()
+        try:
+            with connection.cursor(named_tuple=True) as cursor:
+                cursor.execute("DELETE FROM reviews WHERE user_id = %s", (user_id,))
+                cursor.execute("DELETE FROM wishes WHERE user_id = %s", (user_id,))
+                cursor.execute("DELETE FROM reservations WHERE user_id = %s", (user_id,))
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                connection.commit()
+            flash('Пользователь успешно удален!', 'success')
+        except Exception as e:
+            connection.rollback()
+            flash(f'Ошибка при удалении пользователя: {str(e)}', 'danger')
+    return redirect(url_for('users'))
+
+
 @app.route('/auth', methods=['POST', 'GET'])
 @db_operation
 def auth(cursor):
