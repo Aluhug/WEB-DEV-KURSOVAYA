@@ -17,9 +17,6 @@ ALLOWED_BOOK_EXTENSIONS = {'pdf'}
 app.jinja_env.globals.update(str=str)
 db_connector = DBConnector(app)
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth'
@@ -27,7 +24,6 @@ login_manager.login_message_category = 'warning'
 
 def allowed_file(filename, allowed_extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
-
 
 def db_operation(func):
     @wraps(func)
@@ -67,12 +63,14 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+#Добавить книгу
 @app.route('/admin/add_book', methods=['GET', 'POST'])
 @login_required
 @admin_required
 @db_operation
 def add_book(cursor):
     try:
+        #Форма для заполнения
         if request.method == 'POST':
             title = request.form['title']
             author_first_name = request.form['author_first_name']
@@ -85,21 +83,17 @@ def add_book(cursor):
             book_file = request.files['book_file']
 
             allowed_image_extensions = {'png', 'jpg', 'jpeg'}
-            allowed_book_extensions = {'pdf', 'epub', 'fb2'}
-
+            allowed_book_extensions = {'pdf'}
             # Сохранение файлов обложки и книги
             if cover_image and allowed_file(cover_image.filename, allowed_image_extensions):
                 cover_image_filename = secure_filename(cover_image.filename)
                 cover_image.save(os.path.join(app.config['UPLOAD_FOLDER'], cover_image_filename))
-            else:
-                cover_image_filename = app.config['DEFAULT_COVER_IMAGE']
 
             if book_file and allowed_file(book_file.filename, allowed_book_extensions):
                 book_file_filename = secure_filename(book_file.filename)
                 book_file.save(os.path.join(app.config['UPLOAD_FOLDER'], book_file_filename))
             else:
                 book_file_filename = None
-
             # Вставка автора, если он не существует
             cursor.execute("""
                 INSERT INTO authors (first_name, last_name, middle_name)
@@ -109,7 +103,6 @@ def add_book(cursor):
             cursor.execute("SELECT id FROM authors WHERE first_name = %s AND last_name = %s AND middle_name = %s",
                            (author_first_name, author_last_name, author_middle_name))
             author_id = cursor.fetchone()[0]  # Используем индекс
-
             # Вставка жанра, если он не существует
             cursor.execute("""
                 INSERT INTO genres (name)
@@ -134,7 +127,7 @@ def add_book(cursor):
         flash('Произошла ошибка при добавлении книги.', 'danger')
         return render_template('add_book.html'), 500
 
-
+#Пользователи
 @app.route('/admin/users')
 @admin_required
 @db_operation
@@ -147,6 +140,7 @@ def users(cursor):
         print(f"Error in users route: {e}")
         abort(500)
 
+#Редактировать пользователя
 @app.route('/admin/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @admin_required
 @db_operation
@@ -168,10 +162,12 @@ def edit_user(cursor, user_id):
         print(f"Error in edit_user route: {e}")
         abort(500)
 
+#Начальная страница
 @app.route('/')
 def index():
     return render_template('index.html')
 
+#Удаление пользователя
 @app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -192,7 +188,7 @@ def delete_user(cursor, user_id):
             flash(f'Ошибка при удалении пользователя: {str(e)}', 'danger')
     return redirect(url_for('users'))
 
-
+#Аутентификация
 @app.route('/auth', methods=['POST', 'GET'])
 @db_operation
 def auth(cursor):
@@ -219,6 +215,7 @@ def auth(cursor):
         print(f"Error in auth route: {e}")
         abort(500)
 
+#Регистрация
 @app.route('/register', methods=['POST', 'GET'])
 @db_operation
 def register(cursor):
@@ -266,6 +263,7 @@ def register(cursor):
         print(f"Error in register route: {e}")
         abort(500)
 
+#Профиль
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 @db_operation
@@ -302,8 +300,7 @@ def profile(cursor):
 
     return render_template('profile.html', user=user, reserved_books=reserved_books, reading_books=reading_books)
 
-
-
+#Редактирование профиля
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 @db_operation
@@ -330,7 +327,7 @@ def edit_profile(cursor):
         abort(500)
 
 
-
+#Книги 
 @app.route('/books', methods=['GET', 'POST'])
 @login_required
 @db_operation
@@ -379,8 +376,7 @@ def books(cursor):
 
     return render_template('books.html', books=books, authors=authors, genres=genres)
 
-
-
+#Подробная информация о книге
 @app.route('/book/<int:book_id>', methods=['GET', 'POST'])
 @login_required
 @db_operation
@@ -462,9 +458,7 @@ def book_detail(cursor, book_id):
         print(f"Error in book_detail route: {e}")
         abort(500)
 
-
-
-
+#Читать книгу
 @app.route('/read_book/<int:book_id>')
 @login_required
 @db_operation
@@ -489,7 +483,7 @@ def read_book(cursor, book_id):
         print(f"Error in read_book route: {e}")
         abort(500)
 
-
+#Редактировать книгу
 @app.route('/admin/edit_book/<int:book_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -584,8 +578,7 @@ def edit_book(cursor, book_id):
         print(f"Error in edit_book route: {e}")
         abort(500)
 
-
-
+#Скачать книгу
 @app.route('/download_book/<int:book_id>')
 @login_required
 @db_operation
@@ -600,23 +593,7 @@ def download_book(cursor, book_id):
         print(f"Error in download_book: {e}")
         abort(500)
 
-
-@app.route('/autocomplete/authors')
-@db_operation
-def autocomplete_authors(cursor):
-    cursor.execute("SELECT CONCAT(first_name, ' ', last_name) AS name FROM authors")
-    authors = [author.name for author in cursor.fetchall()]
-    print(authors)  # Отладочная информация
-    return jsonify(authors)
-
-@app.route('/autocomplete/genres')
-@db_operation
-def autocomplete_genres(cursor):
-    cursor.execute("SELECT name FROM genres")
-    genres = [genre.name for genre in cursor.fetchall()]
-    print(genres)  # Отладочная информация
-    return jsonify(genres)
-
+#Удаление книги
 @app.route('/admin/delete_book/<int:book_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -635,9 +612,7 @@ def delete_book(cursor, book_id):
         flash('У вас нет прав для выполнения этого действия.', 'danger')
     return redirect(url_for('books'))
 
-
-
-
+#Пожелания
 @app.route('/wishes', methods=['GET', 'POST'])
 @login_required
 @db_operation
@@ -666,7 +641,7 @@ def wishes(cursor):
         print(f"Error in wishes route: {e}")
         abort(500)
 
-
+#Выход из системы
 @app.route('/logout')
 @login_required
 def logout():
