@@ -11,7 +11,7 @@
                 <h3>Автор: {{ book.author }}</h3>
                 <h4>Жанры: {{ book.genre }}</h4>
                 <p>{{ book.description }}</p>
-                <p>Рейтинг: {{ book.average_rating|round(1) if book.average_rating else 'Рейтинг отсутствует' }}</p>
+                <p>Рейтинг: {{ book.average_rating|round(1) if book.average_rating is not none else book.book_rating }}</p>
                 <form method="post">
                     {% if is_reading %}
                         <button type="submit" name="unmark_reading" class="btn btn-danger">Убрать из читаемых</button>

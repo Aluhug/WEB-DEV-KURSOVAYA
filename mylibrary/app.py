@@ -1,8 +1,7 @@
 import os, datetime, re
 from functools import wraps
-from flask import jsonify
 import mysql.connector as connector
-from flask import Flask, render_template, session, request, redirect, url_for, flash, abort, send_file, send_from_directory
+from flask import Flask, render_template, session, request, redirect, url_for, flash, abort, send_file, send_from_directory, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from mysqldb import DBConnector
@@ -426,13 +425,13 @@ def book_detail(cursor, book_id):
         cursor.execute("""
             SELECT books.id, books.title, CONCAT(authors.first_name, ' ', authors.last_name) AS author, genres.name AS genre, books.description, 
                    COALESCE(books.cover_image, %s) AS cover_image,
-                   books.book_file, AVG(reviews.rating) AS average_rating
+                   books.book_file, AVG(reviews.rating) AS average_rating, books.rating AS book_rating
             FROM books
             JOIN authors ON books.author_id = authors.id
             JOIN genres ON books.genre_id = genres.id
             LEFT JOIN reviews ON books.id = reviews.book_id
             WHERE books.id = %s
-            GROUP BY books.id, authors.first_name, authors.last_name, genres.name, books.description, books.cover_image, books.book_file
+            GROUP BY books.id, authors.first_name, authors.last_name, genres.name, books.description, books.cover_image, books.book_file, books.rating
         """, (app.config['DEFAULT_COVER_IMAGE'], book_id))
         book = cursor.fetchone()
         if book is None:
@@ -462,6 +461,7 @@ def book_detail(cursor, book_id):
     except Exception as e:
         print(f"Error in book_detail route: {e}")
         abort(500)
+
 
 
 
